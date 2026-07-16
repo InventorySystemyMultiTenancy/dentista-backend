@@ -11,7 +11,9 @@ const router = Router();
 router.use(requireAuth, requireRole('ADMIN', 'EMPLOYEE'));
 
 function buildInviteLink(token: string) {
-  const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+  // FRONTEND_URL pode ser uma lista separada por vírgula (ver CORS em app.ts) —
+  // o link de convite usa sempre a primeira, que deve ser a URL "canônica" do site.
+  const base = (process.env.FRONTEND_URL ?? 'http://localhost:3000').split(',')[0].trim();
   return `${base}/ativar-conta?token=${token}`;
 }
 
