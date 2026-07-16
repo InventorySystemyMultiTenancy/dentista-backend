@@ -13,9 +13,22 @@ import portalRoutes from './routes/portal';
 
 const app = express();
 
+// FRONTEND_URL aceita uma lista separada por vírgula (ex.: URL da Vercel em produção
+// + http://localhost:3000 para testar o frontend local contra este backend).
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   }),
 );
