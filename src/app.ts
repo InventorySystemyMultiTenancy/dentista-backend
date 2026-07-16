@@ -14,17 +14,22 @@ import appointmentRequestsRoutes from './routes/appointmentRequests';
 
 const app = express();
 
-// FRONTEND_URL aceita uma lista separada por vírgula (ex.: URL da Vercel em produção
+// FRONTEND_URL aceita uma lista separada por vírgula (ex.: domínio customizado
 // + http://localhost:3000 para testar o frontend local contra este backend).
 const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// A Vercel gera uma URL única por deploy (ex.: dentista-frontend-<hash>-<time>.vercel.app),
+// então além da lista fixa acima, liberamos automaticamente qualquer preview deste projeto
+// específico — assim não é preciso atualizar FRONTEND_URL a cada novo deploy.
+const vercelPreviewPattern = /^https:\/\/dentista-frontend(-[a-z0-9-]+)?\.vercel\.app$/;
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || vercelPreviewPattern.test(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
