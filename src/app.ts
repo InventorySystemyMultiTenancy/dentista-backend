@@ -16,9 +16,12 @@ const app = express();
 
 // FRONTEND_URL aceita uma lista separada por vírgula (ex.: domínio customizado
 // + http://localhost:3000 para testar o frontend local contra este backend).
+// Origin (enviado pelo navegador) nunca tem barra no final — removemos aqui
+// pra uma barra sobrando em FRONTEND_URL (erro comum de configuração) não
+// quebrar a comparação exata.
 const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
 // A Vercel gera uma URL única por deploy (ex.: dentista-frontend-<hash>-<time>.vercel.app),
