@@ -31,4 +31,17 @@ router.get(
   }),
 );
 
+// Criado quando o paciente clica em "Agendar consulta" no portal (que também
+// abre o WhatsApp do responsável) — vira um alerta para a equipe confirmar o
+// horário manualmente na agenda.
+router.post(
+  '/appointment-requests',
+  asyncHandler(async (req, res) => {
+    const request = await prisma.appointmentRequest.create({
+      data: { patientId: req.auth!.patientId! },
+    });
+    return res.status(201).json(request);
+  }),
+);
+
 export default router;

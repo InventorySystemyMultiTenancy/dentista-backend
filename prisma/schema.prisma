@@ -37,6 +37,12 @@ enum InventoryMovementType {
   ADJUSTMENT
 }
 
+enum AppointmentRequestStatus {
+  PENDING
+  CONTACTED
+  DONE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -86,8 +92,9 @@ model Patient {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  appointments Appointment[]
-  exams        Exam[]
+  appointments        Appointment[]
+  exams               Exam[]
+  appointmentRequests AppointmentRequest[]
 }
 
 model Appointment {
@@ -106,6 +113,20 @@ model Appointment {
 
   @@index([date, staffId])
   @@index([patientId])
+}
+
+// Solicitação de agendamento feita pelo paciente pelo botão "Agendar consulta"
+// do portal (que também abre o WhatsApp do responsável) — vira um alerta para
+// a equipe confirmar o horário manualmente na agenda.
+model AppointmentRequest {
+  id        String                    @id @default(cuid())
+  patientId String
+  patient   Patient                   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  status    AppointmentRequestStatus  @default(PENDING)
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+
+  @@index([status])
 }
 
 model Exam {

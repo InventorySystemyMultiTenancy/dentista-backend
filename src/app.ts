@@ -10,6 +10,7 @@ import examsRoutes from './routes/exams';
 import financialRoutes from './routes/financial';
 import inventoryRoutes from './routes/inventory';
 import portalRoutes from './routes/portal';
+import appointmentRequestsRoutes from './routes/appointmentRequests';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/exams', examsRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/portal', portalRoutes);
+app.use('/api/appointment-requests', appointmentRequestsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
