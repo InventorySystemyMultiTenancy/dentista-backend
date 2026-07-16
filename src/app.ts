@@ -32,7 +32,8 @@ app.use(
       if (!origin || allowedOrigins.includes(origin) || vercelPreviewPattern.test(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.warn(`CORS bloqueado para origin "${origin}". Permitidos: ${allowedOrigins.join(', ')}`);
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,
