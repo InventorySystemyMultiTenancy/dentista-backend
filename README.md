@@ -72,8 +72,11 @@ sempre têm acesso total, independente do JSON de permissões.
 
 1. Crie um banco **PostgreSQL** no Render e copie a **Internal Database URL**.
 2. Crie um **Web Service** apontando para este diretório (`backend/`):
-   - Build Command: `npm install && npm run build && npx prisma migrate deploy`
+   - Build Command: `npm install --include=dev && npm run build && npx prisma migrate deploy`
    - Start Command: `npm start`
+   - O `--include=dev` é necessário porque `NODE_ENV=production` faz o `npm install` pular as
+     devDependencies (typescript, @types/*, prisma) — que são justamente o que falta para o `tsc`
+     compilar durante o build. Em runtime (`npm start`) isso não importa, só afeta a etapa de build.
 3. Configure as variáveis de ambiente no Render: `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`
    (URL do frontend na Vercel), `NODE_ENV=production`.
 4. Rode o seed uma vez (via Shell do Render): `npm run seed`.
