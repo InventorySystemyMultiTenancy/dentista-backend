@@ -5,7 +5,8 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && prisma generate",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
