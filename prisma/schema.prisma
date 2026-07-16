@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  PATIENT
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum FinancialType {
+  PAYABLE
+  RECEIVABLE
+}
+
+enum FinancialStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staff   Staff?
+  patient Patient?
+}
+
+// Permissions ficam num JSON solto (sem schema fixo no banco) para permitir
+// adicionar novos modulos sem migration. Formato esperado:
+// { patients: { view: bool, edit: bool }, agenda: {...}, exams: {...}, financial: {...}, inventory: {...}, employees: {...} }
+model Staff {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String?
+  position    String?
+  permissions Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments Appointment[] @relation("StaffAppointments")
+  exams        Exam[]        @relation("StaffExams")
+  movements    InventoryMovement[] @relation("StaffMovements")
+  financialEntriesCreated FinancialEntry[] @relation("StaffFinancialEntries")
+}
+
+model Patient {
+  id                   String    @id @default(cuid())
+  userId               String?   @unique
+  user                 User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name                 String
+  email                String?
+  cpf                  String?   @unique
+  phone                String
+  birthDate            DateTime?
+  address              String?
+  notes                String?
+  inviteToken          String?   @unique
+  inviteTokenExpiresAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  appointments Appointment[]
+  exams        Exam[]
+}
+
+model Appointment {
+  id        String            @id @default(cuid())
+  patientId String
+  patient   Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staffId   String
+  staff     Staff             @relation("StaffAppointments", fields: [staffId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  status    AppointmentStatus @default(SCHEDULED)
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([date, staffId])
+  @@index([patientId])
+}
+
+model Exam {
+  id            String   @id @default(cuid())
+  patientId     String
+  patient       Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staffId       String
+  staff         Staff    @relation("StaffExams", fields: [staffId], references: [id])
+  type          String
+  date          DateTime
+  status        String
+  value         Float?
+  notes         String?
+  attachmentUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+model FinancialEntry {
+  id            String          @id @default(cuid())
+  type          FinancialType
+  description   String
+  category      String
+  amount        Decimal         @db.Decimal(12, 2)
+  dueDate       DateTime
+  paidDate      DateTime?
+  status        FinancialStatus @default(PENDING)
+  attachmentUrl String?
+  createdById   String
+  createdBy     Staff           @relation("StaffFinancialEntries", fields: [createdById], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([dueDate])
+  @@index([status])
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  unit        String
+  quantity    Float    @default(0)
+  minQuantity Float    @default(0)
+  costPrice   Decimal? @db.Decimal(12, 2)
+  supplier    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movements InventoryMovement[]
+}
+
+model InventoryMovement {
+  id        String                @id @default(cuid())
+  itemId    String
+  item      InventoryItem         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  type      InventoryMovementType
+  quantity  Float
+  reason    String?
+  staffId   String
+  staff     Staff                 @relation("StaffMovements", fields: [staffId], references: [id])
+  createdAt DateTime              @default(now())
+
+  @@index([itemId])
+}
